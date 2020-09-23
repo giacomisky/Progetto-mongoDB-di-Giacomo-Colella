@@ -19,6 +19,7 @@ def registrationR(request):
             newUser = Profile(user=user)
             newUser.btcAmount = random.uniform(1, 10)
             newUser.save()
+            form = LoginForm()
             return render(request, 'app/login.html', {})
         else:
             print('utente gia registrato')
