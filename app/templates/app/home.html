@@ -1,0 +1,48 @@
+<html>
+<head>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css">
+</head>
+<body>
+<div class="ui secondary pointing menu">
+  <a class="item active">Home </a>
+  <div class="right menu">
+    <label>BTC: {{ btcVal }}</label>
+  </div>
+</div>
+<div class="ui segment">
+   <form class="ui form" name='purchase' method='post'>
+ {% csrf_token %}
+  <div class="field">
+    <label>Quantità: </label>
+    <input type="text" name="quantità" placeholder="quantità">
+  </div>
+  <div class="field">
+    <label>Prezzo: </label>
+    <input type="text" name="prezzo d'acquisto" placeholder="prezzo">
+  </div>
+  
+  <button class="ui button" type="submit">Compra</button>
+</form>
+</div>
+
+<div class="ui segment">
+   <form class="ui form" name='sale' method='post'>
+   {% csrf_token %}
+  <div class="field">
+    <label>Quantità</label>
+    <input type="text" name="quantità" placeholder="quantità">
+  </div>
+  <div class="field">
+    <label>Prezzo</label>
+    <input type="text" name="prezzo di vendita" placeholder="prezzo">
+  </div>
+  <button class="ui button" type="submit">Vendi</button>
+</form>
+</div>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.js"></script>
+
+</body>
+</html>
