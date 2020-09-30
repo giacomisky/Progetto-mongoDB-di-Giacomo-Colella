@@ -14,11 +14,11 @@
  {% csrf_token %}
   <div class="field">
     <label>Quantità: </label>
-    <input type="text" name="quantità" placeholder="quantità">
+    <input type="text" name="quantity" placeholder="quantità">
   </div>
   <div class="field">
     <label>Prezzo: </label>
-    <input type="text" name="prezzo d'acquisto" placeholder="prezzo">
+    <input type="text" name="purchasePrice" placeholder="prezzo">
   </div>
   
   <button class="ui button" type="submit">Compra</button>
@@ -30,11 +30,11 @@
    {% csrf_token %}
   <div class="field">
     <label>Quantità</label>
-    <input type="text" name="quantità" placeholder="quantità">
+    <input type="text" name="quantity" placeholder="quantità">
   </div>
   <div class="field">
     <label>Prezzo</label>
-    <input type="text" name="prezzo di vendita" placeholder="prezzo">
+    <input type="text" name="salePrice" placeholder="prezzo">
   </div>
   <button class="ui button" type="submit">Vendi</button>
 </form>

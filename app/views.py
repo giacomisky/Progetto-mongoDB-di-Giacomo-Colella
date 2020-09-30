@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from .forms import RegisterForm, LoginForm
 from .models import Profile, saleOrder, purchaseOrder
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import HttpResponseRedirect, JsonResponse, HttpResponse
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
@@ -11,7 +11,6 @@ def registrationR(request):
     if request.method == 'POST':
         form = request.POST
         if form:
-            print('ciao')
             username = form['username']
             email = form['email']
             password = form['password']
@@ -47,56 +46,49 @@ def home(request):
         thisUser = Profile.objects.get(user=request.user)
         if values:
             #Verfico se l'ordine in questione, è di acquisto o di vendita
-            if "prezzo d'acquisto" in values:
+            if "purchasePrice" in values:
                 try:
-                    price = values["prezzo d'acquisto"]
-                    quantity = values['quantità']
+                    price = values["purchasePrice"]
+                    quantity = values['quantity']
                 except:
-                    pass
+                    HttpResponse('Invalid data entered!')
                 else:
                     userBalance = thisUser.btcBalance #recupero il bilancio dell'utente
                     if float(price) < userBalance : #verifico se l'utente dispone del saldo minimo per effettuare l'acquisto
                         newPurchase = purchaseOrder(profile=thisUser, price=price, quantity=quantity)
                         newPurchase.save()
 
-                        try:
-                            print('wee')
-                            #filtro gli ordini di vendita con prezzo minore dell'ordine di acquisto,  recuperando il primo della lista
-                            saleOrders = saleOrder.objects.filter(price__lt=newPurchase.price)[0]
-                        except:
-                            pass
-                        else:
-                            if saleOrders:
-                                
-                                #registro i due ordini
-                                purchaseOrder.objects.filter(_id=newPurchase._id).update(active=False)
-                                thisUser.btcAmount += float(newPurchase.quantity)
-                                thisUser.btcBalance -= float(newPurchase.price)
-                                thisUser.save()
-                                
-                                
-                                saleOrder.objects.filter(_id=saleOrders._id).update(active=False)
-                                saleProfile = saleOrders.profile
+                        #filtro gli ordini di vendita con prezzo minore dell'ordine di acquisto,  recuperando il primo della lista
+                        saleOrders = saleOrder.objects.filter(price__lt=newPurchase.price)[0]
+                        
+                        if saleOrders:
+                            #registro i due ordini
+                            purchaseOrder.objects.filter(_id=newPurchase._id).update(active=False)
+                            thisUser.btcAmount += float(newPurchase.quantity)
+                            thisUser.btcBalance -= float(newPurchase.price)
+                            thisUser.save()
+                            
+                            saleOrder.objects.filter(_id=saleOrders._id).update(active=False)
+                            saleProfile = saleOrders.profile
 
-                                oldBalance = saleProfile.btcBalance                                
-                                
-                                saleProfile.btcAmount -= float(saleOrders.quantity)
-                                saleProfile.btcBalance += float(saleOrders.price)
-                                
-                                profit = saleProfile.btcBalance - oldBalance #calcolo il profitto in btc
-                                saleProfile.profit = profit
-                                saleProfile.save()
-                                print('Ordine registrato')
-                            else:
-                                print("Impossibile effettuare l'operazione")
+                            oldBalance = saleProfile.btcBalance                                
+                            
+                            saleProfile.btcAmount -= float(saleOrders.quantity)
+                            saleProfile.btcBalance += float(saleOrders.price)
+                            
+                            profit = saleProfile.btcBalance - oldBalance #calcolo il profitto in btc
+                            saleProfile.profit = profit
+                            saleProfile.save()
+                            HttpResponse('Registered order')
+                        else:
+                            HttpResponse("Impossible to perfom the operation!")
 
             else:
                 try:
-                    price = values["prezzo di vendita"]
-                    quantity = values['quantità']
-                    
+                    price = values["salePrice"]
+                    quantity = values['quantity']
                 except:
-                    pass
+                    HttpResponse('Invalid data entered!')
                 else:
                     userBtc = thisUser.btcAmount #recupero il numero di bitcoin che lutente possiede
                     if float(quantity) < userBtc:
@@ -115,31 +107,29 @@ def home(request):
 
 def checkActiveOrders(request):
     response = []
-    try:
-        activePurOrders = purchaseOrder.objects.filter(active=True)
-        for order in activePurOrders:
-            response.append( {
-                'id': str(order._id),
-                'tipology': 'purchase',
-                'datetime': order.datetime,
-                'price': order.price,
-                'quantity': order.quantity
-            })
-    except:
-        pass
     
-    try:
-        activeSaleOrders = saleOrder.objects.filter(active=True)
-        for order2 in activeSaleOrders:
-            response.append( {
-                'id': str(order2._id),
-                'tipology': 'sale',
-                'datetime': order2.datetime,
-                'price': order2.price,
-                'quantity': order2.quantity
-            })
-    except:
-        pass
+    #Recupero gli ordini d'acquisto
+    activePurOrders = purchaseOrder.objects.filter(active=True)
+    for order in activePurOrders:
+        response.append( {
+            'id': str(order._id),
+            'tipology': 'purchase',
+            'datetime': order.datetime,
+            'price': order.price,
+            'quantity': order.quantity
+        })
+    
+    #Recupero gli ordini di venditas
+    activeSaleOrders = saleOrder.objects.filter(active=True)
+    for order2 in activeSaleOrders:
+        response.append( {
+            'id': str(order2._id),
+            'tipology': 'sale',
+            'datetime': order2.datetime,
+            'price': order2.price,
+            'quantity': order2.quantity
+        })
+    
     return JsonResponse(response, safe=False)
 
 
@@ -152,13 +142,13 @@ def checkProfit(request):
                 'user': str(user._id),
                 'balance': user.btcBalance,
                 'btcAmount': user.btcAmount,
-                'profit': '+'+str(user.profit)
+                'profit': f"+{user.profit}"
             })
         else:
             response.append({
                 'user': str(user._id),
                 'balance': user.btcBalance,
                 'btcAmount': user.btcAmount,
-                'profit': '-'+str(user.profit)
+                'profit': f"-{user.profit}"
             })
     return JsonResponse(response, safe=False)
